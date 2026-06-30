@@ -50,7 +50,6 @@
             width: 100%;
             max-width: 560px;
             padding: 10px;
-            transition: padding 0.3s;
         }
         .page {
             display: none;
@@ -151,6 +150,13 @@
         .btn-home { background:transparent; border:2px solid rgba(255,255,255,0.2); color:#d0d0e0; }
         .btn-volume { background:rgba(255,255,255,0.07); border:2px solid rgba(255,255,255,0.18); color:#e0e0e0; }
         .btn-volume:hover { border-color:rgba(255,255,255,0.45); color:#fff; background:rgba(255,255,255,0.13); }
+        /* WHITE HINT TEXT */
+        .hint-row {
+            color: #ffffff !important;
+        }
+        .hint-dot {
+            background: var(--accent2);
+        }
         @media (max-width:520px){ :root{--cell:42px;--grid-px:420px} .app-container{padding:6px} .btn-start{font-size:1.1rem;padding:14px 38px} }
         @media (max-width:440px){ :root{--cell:36px;--grid-px:360px} }
     </style>
@@ -163,7 +169,7 @@
     </div>
     <div class="drag-ghost" id="dragGhost"><canvas id="ghostCanvas"></canvas></div>
     <div class="overlay" id="gameOverOverlay"><div class="overlay-card"><div class="overlay-emoji" id="overlayEmoji">😵</div><h2 class="overlay-title">GAME OVER</h2><p class="overlay-score">Skor Akhir: <strong id="finalScore">0</strong></p><button class="btn btn-retry" id="btnRetry">🔄 &nbsp;Coba Lagi</button><button class="btn btn-home" id="btnHome">🏠 &nbsp;Halaman Utama</button></div></div>
-    <div class="overlay" id="pauseOverlay"><div class="overlay-card"><div class="pause-icon-big">⏸️</div><h2 class="overlay-title">JEDA</h2><p class="overlay-score">Permainan dijeda</p><button class="btn btn-continue" id="btnContinue">▶ &nbsp;Lanjut</button><button class="btn btn-home" id="btnPauseHome">🏠 &nbsp;Halaman Utama</button><button class="btn btn-volume" id="btnVolumeToggle"><span class="volume-icon">🔊</span> Suara: <span id="volumeLabel">ON</span></button></div></div>
+    <div class="overlay" id="pauseOverlay"><div class="overlay-card"><div class="pause-icon-big">⏸️</div><h2 class="overlay-title">JEDA</h2><p class="overlay-score">Permainan dijeda</p><button class="btn btn-continue" id="btnContinue">▶ &nbsp;Lanjut</button><button class="btn btn-home" id="btnPauseHome">🏠 &nbsp;Halaman Utama</button><button class="btn btn-volume" id="btnVolumeToggle"><span class="volume-icon">🎵</span> Musik: <span id="volumeLabel">ON</span></button></div></div>
     <script>
         (function() {
             const $ = id => document.getElementById(id);
@@ -188,7 +194,7 @@
 
             let audioCtx = null, musicGainNode = null, sfxGainNode = null;
             let startMusicInterval = null, gameMusicInterval = null;
-            let audioInitialized = false, audioMuted = false;
+            let audioInitialized = false, musicMuted = false; // renamed: hanya untuk musik
 
             function initAudio() {
                 if (audioInitialized && audioCtx) return;
@@ -196,22 +202,22 @@
                     audioCtx = new(window.AudioContext || window.webkitAudioContext)();
                     if (audioCtx.state === 'suspended') audioCtx.resume().catch(() => {});
                     musicGainNode = audioCtx.createGain();
-                    musicGainNode.gain.setValueAtTime(audioMuted ? 0 : 0.38, audioCtx.currentTime);
+                    musicGainNode.gain.setValueAtTime(musicMuted ? 0 : 0.18, audioCtx.currentTime); // diperkecil
                     musicGainNode.connect(audioCtx.destination);
                     sfxGainNode = audioCtx.createGain();
-                    sfxGainNode.gain.setValueAtTime(audioMuted ? 0 : 0.85, audioCtx.currentTime);
+                    sfxGainNode.gain.setValueAtTime(0.85, audioCtx.currentTime); // SFX tetap keras
                     sfxGainNode.connect(audioCtx.destination);
                     audioInitialized = true;
                 } catch (e) { console.warn('Web Audio API tidak tersedia'); }
             }
 
-            function toggleMute() {
-                audioMuted = !audioMuted;
-                const mVol = audioMuted ? 0 : 0.38, sVol = audioMuted ? 0 : 0.85;
+            function toggleMusicMute() {
+                musicMuted = !musicMuted;
+                const mVol = musicMuted ? 0 : 0.18;
                 if (musicGainNode) musicGainNode.gain.setValueAtTime(mVol, audioCtx.currentTime);
-                if (sfxGainNode) sfxGainNode.gain.setValueAtTime(sVol, audioCtx.currentTime);
-                volumeLabel.textContent = audioMuted ? 'OFF' : 'ON';
-                volumeIcon.textContent = audioMuted ? '🔇' : '🔊';
+                // SFX tidak terpengaruh
+                volumeLabel.textContent = musicMuted ? 'OFF' : 'ON';
+                volumeIcon.textContent = musicMuted ? '🔇' : '🎵';
             }
 
             function ensureAudioRunning() { if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume(); }
@@ -233,7 +239,7 @@
                 const tm = audioCtx.currentTime + dl;
                 const o = audioCtx.createOscillator(), g = audioCtx.createGain();
                 o.type = t; o.frequency.setValueAtTime(f, tm);
-                g.gain.setValueAtTime(Math.min(v, 0.24), tm);
+                g.gain.setValueAtTime(Math.min(v, 0.15), tm); // batasi volume not musik
                 g.gain.exponentialRampToValueAtTime(0.001, tm + d);
                 o.connect(g); g.connect(musicGainNode); o.start(tm); o.stop(tm + d);
             }
@@ -253,7 +259,7 @@
                 ensureAudioRunning();
                 const mel = [{f:262,d:0.5},{f:330,d:0.5},{f:392,d:0.6},{f:330,d:0.4},{f:294,d:0.5},{f:349,d:0.5},{f:440,d:0.7},{f:349,d:0.5},{f:330,d:0.45},{f:294,d:0.45},{f:262,d:0.8},{f:220,d:0.5}];
                 let i = 0;
-                function play() { if(!startMusicInterval)return; const n=mel[i%mel.length]; playMusicNote(n.f,'sine',n.d*0.75,0.22,0); playMusicNote(n.f*1.5,'sine',n.d*0.4,0.08,n.d*0.08); if(i%4===0)playMusicNote(n.f/2,'triangle',n.d*1.1,0.14,0); i++; }
+                function play() { if(!startMusicInterval)return; const n=mel[i%mel.length]; playMusicNote(n.f,'sine',n.d*0.75,0.12,0); playMusicNote(n.f*1.5,'sine',n.d*0.4,0.05,n.d*0.08); if(i%4===0)playMusicNote(n.f/2,'triangle',n.d*1.1,0.08,0); i++; }
                 play(); startMusicInterval = setInterval(play,1950);
             }
             function stopStartPageMusic() { if(startMusicInterval){clearInterval(startMusicInterval);startMusicInterval=null;} }
@@ -264,7 +270,7 @@
                 const bass=[110,110,130,130,146,146,130,110,98,110,130,146];
                 const chords=[[330,392,440],[330,392,440],[349,440,523],[349,440,523],[392,466,587],[392,466,587],[349,440,523],[330,392,440],[294,349,440],[330,392,440],[349,440,523],[392,466,587]];
                 let i=0;
-                function play() { if(!gameMusicInterval)return; const b=bass[i%12],ch=chords[i%12]; playMusicNote(b,'triangle',0.3,0.26,0); playMusicNote(b*2,'sine',0.15,0.11,0.04); ch.forEach((f,j)=>playMusicNote(f,'square',0.16,0.08,0.06+j*0.04)); if(i%4===0)playMusicNote(b/2,'sine',0.5,0.12,0); i++; }
+                function play() { if(!gameMusicInterval)return; const b=bass[i%12],ch=chords[i%12]; playMusicNote(b,'triangle',0.3,0.14,0); playMusicNote(b*2,'sine',0.15,0.06,0.04); ch.forEach((f,j)=>playMusicNote(f,'square',0.16,0.04,0.06+j*0.04)); if(i%4===0)playMusicNote(b/2,'sine',0.5,0.06,0); i++; }
                 play(); gameMusicInterval = setInterval(play,850);
             }
             function stopGameplayMusic() { if(gameMusicInterval){clearInterval(gameMusicInterval);gameMusicInterval=null;} }
@@ -335,7 +341,7 @@
             function startTimer(){ startTime=Date.now(); totalPausedMs=0; pauseStartTime=0; updateTimeDisplay(); if(timerInterval)clearInterval(timerInterval); timerInterval=setInterval(()=>{if(!gameActive)return;if(!gamePaused)updateTimeDisplay();},300); }
 
             function pauseGame(){ if(!gameActive||gamePaused)return; gamePaused=true; pauseStartTime=Date.now(); pauseAllMusic(); sfxPause(); pauseOverlay.classList.add('active'); drawBoard(); }
-            function resumeGame(){ if(!gameActive||!gamePaused)return; totalPausedMs+=Date.now()-pauseStartTime; pauseStartTime=0; gamePaused=false; pauseOverlay.classList.remove('active'); sfxResume(); startGameplayMusic(); updateTimeDisplay(); drawBoard(); renderTray(); }
+            function resumeGame(){ if(!gameActive||!gamePaused)return; totalPausedMs+=Date.now()-pauseStartTime; pauseStartTime=0; gamePaused=false; pauseOverlay.classList.remove('active'); sfxResume(); if(!musicMuted) startGameplayMusic(); updateTimeDisplay(); drawBoard(); renderTray(); }
             function goHomeFromPause(){ totalPausedMs+=Date.now()-pauseStartTime; pauseStartTime=0; gamePaused=false; pauseOverlay.classList.remove('active'); goHome(); }
 
             function drawBoard(){
@@ -390,10 +396,10 @@
 
             boardCanvas.addEventListener('click',e=>{ if(!gameActive||gamePaused||dragState)return; if(selectedPieceIndex<0||selectedPieceIndex>=pieces.length)return; initAudio(); ensureAudioRunning(); const CS=getCellSize(), rect=boardCanvas.getBoundingClientRect(), sx=boardCanvas.width/rect.width, sy=boardCanvas.height/rect.height, cx=(e.clientX-rect.left)*sx, cy=(e.clientY-rect.top)*sy; const piece=pieces[selectedPieceIndex], b=getBounds(piece.shape), scInit=Math.round(cx/CS-b.minC-(b.cols-1)/2), srInit=Math.round(cy/CS-b.minR-(b.rows-1)/2), grab=findClosestShapeCell(piece.shape,cx,cy,srInit,scInit), grabGridCol=Math.round(cx/CS), grabGridRow=Math.round(cy/CS), sc=grabGridCol-grab.c, sr=grabGridRow-grab.r; if(sr>=0&&sr<GRID_SIZE&&sc>=0&&sc<GRID_SIZE){ if(!placePiece(selectedPieceIndex,sr,sc))sfxInvalid(); } else sfxInvalid(); });
 
-            function showStart(){ gameActive=false; gamePaused=false; pauseOverlay.classList.remove('active'); stopGameplayMusic(); if(timerInterval)clearInterval(timerInterval); gameOverOverlay.classList.remove('active'); startPage.classList.add('active'); gamePage.classList.remove('active'); dragState=null; dragGhost.classList.remove('active'); document.body.classList.remove('dragging'); clearingCells=[]; particles=[]; popAnims=[]; scorePopups=[]; shockwaves=[]; shakeAmount=0; shakeDuration=0; resetGrid(); pieces=[]; selectedPieceIndex=-1; pieceTray.innerHTML=''; updateCanvasSize(); drawBoard(); if(audioInitialized)startStartPageMusic(); }
-            function startGame(){ initAudio(); ensureAudioRunning(); sfxStartButton(); stopStartPageMusic(); loadingOverlay.classList.add('active'); sfxLoading(); setTimeout(()=>{ loadingOverlay.classList.remove('active'); resetGrid(); score=0; totalPausedMs=0; pauseStartTime=0; clearingCells=[]; clearAnimTimer=0; particles=[]; popAnims=[]; scorePopups=[]; shockwaves=[]; shakeAmount=0; shakeDuration=0; dragState=null; gamePaused=false; pauseOverlay.classList.remove('active'); dragGhost.classList.remove('active'); document.body.classList.remove('dragging'); updateScore(); updateTimeDisplay(); gameActive=true; selectedPieceIndex=-1; pieces=[]; updateCanvasSize(); genPieces(3); drawBoard(); renderTray(); startPage.classList.remove('active'); gamePage.classList.add('active'); gameOverOverlay.classList.remove('active'); startTimer(); startGameplayMusic(); },600); }
-            function retryGame(){ initAudio(); ensureAudioRunning(); sfxStartButton(); stopGameplayMusic(); gamePaused=false; pauseOverlay.classList.remove('active'); loadingOverlay.classList.add('active'); sfxLoading(); setTimeout(()=>{ loadingOverlay.classList.remove('active'); resetGrid(); score=0; totalPausedMs=0; pauseStartTime=0; clearingCells=[]; clearAnimTimer=0; particles=[]; popAnims=[]; scorePopups=[]; shockwaves=[]; shakeAmount=0; shakeDuration=0; dragState=null; dragGhost.classList.remove('active'); document.body.classList.remove('dragging'); updateScore(); updateTimeDisplay(); gameActive=true; selectedPieceIndex=-1; pieces=[]; updateCanvasSize(); genPieces(3); drawBoard(); renderTray(); gameOverOverlay.classList.remove('active'); startTimer(); startGameplayMusic(); },500); }
-            function goHome(){ gameActive=false; gamePaused=false; pauseOverlay.classList.remove('active'); stopGameplayMusic(); if(timerInterval)clearInterval(timerInterval); gameOverOverlay.classList.remove('active'); startPage.classList.add('active'); gamePage.classList.remove('active'); dragState=null; dragGhost.classList.remove('active'); document.body.classList.remove('dragging'); clearingCells=[]; particles=[]; popAnims=[]; scorePopups=[]; shockwaves=[]; shakeAmount=0; shakeDuration=0; resetGrid(); pieces=[]; selectedPieceIndex=-1; pieceTray.innerHTML=''; updateCanvasSize(); drawBoard(); if(audioInitialized)startStartPageMusic(); }
+            function showStart(){ gameActive=false; gamePaused=false; pauseOverlay.classList.remove('active'); stopGameplayMusic(); if(timerInterval)clearInterval(timerInterval); gameOverOverlay.classList.remove('active'); startPage.classList.add('active'); gamePage.classList.remove('active'); dragState=null; dragGhost.classList.remove('active'); document.body.classList.remove('dragging'); clearingCells=[]; particles=[]; popAnims=[]; scorePopups=[]; shockwaves=[]; shakeAmount=0; shakeDuration=0; resetGrid(); pieces=[]; selectedPieceIndex=-1; pieceTray.innerHTML=''; updateCanvasSize(); drawBoard(); if(audioInitialized && !musicMuted) startStartPageMusic(); }
+            function startGame(){ initAudio(); ensureAudioRunning(); sfxStartButton(); stopStartPageMusic(); loadingOverlay.classList.add('active'); sfxLoading(); setTimeout(()=>{ loadingOverlay.classList.remove('active'); resetGrid(); score=0; totalPausedMs=0; pauseStartTime=0; clearingCells=[]; clearAnimTimer=0; particles=[]; popAnims=[]; scorePopups=[]; shockwaves=[]; shakeAmount=0; shakeDuration=0; dragState=null; gamePaused=false; pauseOverlay.classList.remove('active'); dragGhost.classList.remove('active'); document.body.classList.remove('dragging'); updateScore(); updateTimeDisplay(); gameActive=true; selectedPieceIndex=-1; pieces=[]; updateCanvasSize(); genPieces(3); drawBoard(); renderTray(); startPage.classList.remove('active'); gamePage.classList.add('active'); gameOverOverlay.classList.remove('active'); startTimer(); if(!musicMuted) startGameplayMusic(); },600); }
+            function retryGame(){ initAudio(); ensureAudioRunning(); sfxStartButton(); stopGameplayMusic(); gamePaused=false; pauseOverlay.classList.remove('active'); loadingOverlay.classList.add('active'); sfxLoading(); setTimeout(()=>{ loadingOverlay.classList.remove('active'); resetGrid(); score=0; totalPausedMs=0; pauseStartTime=0; clearingCells=[]; clearAnimTimer=0; particles=[]; popAnims=[]; scorePopups=[]; shockwaves=[]; shakeAmount=0; shakeDuration=0; dragState=null; dragGhost.classList.remove('active'); document.body.classList.remove('dragging'); updateScore(); updateTimeDisplay(); gameActive=true; selectedPieceIndex=-1; pieces=[]; updateCanvasSize(); genPieces(3); drawBoard(); renderTray(); gameOverOverlay.classList.remove('active'); startTimer(); if(!musicMuted) startGameplayMusic(); },500); }
+            function goHome(){ gameActive=false; gamePaused=false; pauseOverlay.classList.remove('active'); stopGameplayMusic(); if(timerInterval)clearInterval(timerInterval); gameOverOverlay.classList.remove('active'); startPage.classList.add('active'); gamePage.classList.remove('active'); dragState=null; dragGhost.classList.remove('active'); document.body.classList.remove('dragging'); clearingCells=[]; particles=[]; popAnims=[]; scorePopups=[]; shockwaves=[]; shakeAmount=0; shakeDuration=0; resetGrid(); pieces=[]; selectedPieceIndex=-1; pieceTray.innerHTML=''; updateCanvasSize(); drawBoard(); if(audioInitialized && !musicMuted) startStartPageMusic(); }
 
             $('btnStart').addEventListener('click',e=>{e.preventDefault();startGame();});
             $('btnRetry').addEventListener('click',e=>{e.preventDefault();retryGame();});
@@ -401,18 +407,18 @@
             $('btnPause').addEventListener('click',e=>{e.preventDefault();if(!gameActive)return;initAudio();ensureAudioRunning();gamePaused?resumeGame():pauseGame();});
             $('btnContinue').addEventListener('click',e=>{e.preventDefault();resumeGame();});
             $('btnPauseHome').addEventListener('click',e=>{e.preventDefault();goHomeFromPause();});
-            $('btnVolumeToggle').addEventListener('click',e=>{e.preventDefault();initAudio();ensureAudioRunning();toggleMute();});
+            $('btnVolumeToggle').addEventListener('click',e=>{e.preventDefault();initAudio();ensureAudioRunning();toggleMusicMute();});
 
             let lastT=performance.now();
             function loop(ts){ const dt=Math.min((ts-lastT)/16.67,3); lastT=ts; if(gameActive&&!gamePaused){ if(clearAnimTimer>0){clearAnimTimer-=16.67;if(clearAnimTimer<0)clearAnimTimer=0;} if(shakeDuration>0){shakeDuration-=16.67;if(shakeDuration<=0){shakeAmount=0;shakeDuration=0;}} for(let i=popAnims.length-1;i>=0;i--){popAnims[i].life-=0.04*dt;if(popAnims[i].life<=0)popAnims.splice(i,1);} updateParticles(dt); drawBoard(); } if(gameActive&&gamePaused)drawBoard(); requestAnimationFrame(loop); }
 
             resetGrid(); updateCanvasSize(); drawBoard(); requestAnimationFrame(loop);
-            document.addEventListener('click',function firstInteraction(){initAudio();ensureAudioRunning();startStartPageMusic();document.removeEventListener('click',firstInteraction);},{once:true});
-            document.addEventListener('touchstart',function firstTouch(){initAudio();ensureAudioRunning();startStartPageMusic();document.removeEventListener('touchstart',firstTouch);},{once:true});
+            document.addEventListener('click',function firstInteraction(){initAudio();ensureAudioRunning();if(!musicMuted)startStartPageMusic();document.removeEventListener('click',firstInteraction);},{once:true});
+            document.addEventListener('touchstart',function firstTouch(){initAudio();ensureAudioRunning();if(!musicMuted)startStartPageMusic();document.removeEventListener('touchstart',firstTouch);},{once:true});
             window.addEventListener('resize',()=>{updateCanvasSize();renderTray();if(dragState){dragGhost.classList.remove('active');dragState=null;document.body.classList.remove('dragging');}});
             window.addEventListener('blur',()=>{if(dragState){dragState=null;dragGhost.classList.remove('active');document.body.classList.remove('dragging');} pauseAllMusic();});
-            window.addEventListener('focus',()=>{if(gameActive&&!gamePaused&&audioInitialized)startGameplayMusic();else if(!gameActive&&audioInitialized&&startPage.classList.contains('active'))startStartPageMusic();});
-            document.addEventListener('visibilitychange',()=>{if(document.hidden){pauseAllMusic();}else{if(gameActive&&!gamePaused&&audioInitialized)startGameplayMusic();else if(!gameActive&&audioInitialized&&startPage.classList.contains('active'))startStartPageMusic();}});
+            window.addEventListener('focus',()=>{if(gameActive&&!gamePaused&&audioInitialized&&!musicMuted)startGameplayMusic();else if(!gameActive&&audioInitialized&&startPage.classList.contains('active')&&!musicMuted)startStartPageMusic();});
+            document.addEventListener('visibilitychange',()=>{if(document.hidden){pauseAllMusic();}else{if(gameActive&&!gamePaused&&audioInitialized&&!musicMuted)startGameplayMusic();else if(!gameActive&&audioInitialized&&startPage.classList.contains('active')&&!musicMuted)startStartPageMusic();}});
         })();
     </script>
 </body>
