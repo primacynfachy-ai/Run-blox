@@ -4,6 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>BLOX RUN</title>
+    <meta name="description" content="BLOX RUN - Puzzle blok seret & letakkan. Cocokkan warna, penuhi baris, dan raih skor tertinggi. Dibuat oleh Nnfachy.">
+    <meta property="og:title" content="BLOX RUN">
+    <meta property="og:description" content="Puzzle blok 10x10 yang seru! Seret blok warna-warni, penuhi baris atau kolom, dan dapatkan efek ledakan menggelegar.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://nnfachy.github.io/blox-run/">
+    <meta property="og:image" content="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1200' height='630'%3E%3Crect width='1200' height='630' fill='%23141c2b'/%3E%3Ctext x='600' y='315' font-family='Arial' font-size='80' font-weight='bold' fill='%23ffe140' text-anchor='middle' dominant-baseline='middle'%3EBLOX RUN%3C/text%3E%3C/svg%3E">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="BLOX RUN">
+    <meta name="twitter:description" content="Puzzle blok 10x10 yang seru! Seret blok warna-warni, penuhi baris atau kolom, dan dapatkan efek ledakan menggelegar.">
+    <meta name="twitter:image" content="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1200' height='600'%3E%3Crect width='1200' height='600' fill='%23141c2b'/%3E%3Ctext x='600' y='300' font-family='Arial' font-size='80' font-weight='bold' fill='%23ffe140' text-anchor='middle' dominant-baseline='middle'%3EBLOX RUN%3C/text%3E%3C/svg%3E">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect x='10' y='10' width='80' height='80' rx='20' fill='%23ff3b3b'/%3E%3Crect x='25' y='25' width='20' height='20' rx='5' fill='%23ffe140'/%3E%3Crect x='55' y='55' width='20' height='20' rx='5' fill='%233b7bff'/%3E%3C/svg%3E">
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Caveat:wght@700&family=Quicksand:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -150,13 +161,8 @@
         .btn-home { background:transparent; border:2px solid rgba(255,255,255,0.2); color:#d0d0e0; }
         .btn-volume { background:rgba(255,255,255,0.07); border:2px solid rgba(255,255,255,0.18); color:#e0e0e0; }
         .btn-volume:hover { border-color:rgba(255,255,255,0.45); color:#fff; background:rgba(255,255,255,0.13); }
-        /* WHITE HINT TEXT */
-        .hint-row {
-            color: #ffffff !important;
-        }
-        .hint-dot {
-            background: var(--accent2);
-        }
+        .hint-row { color: #ffffff !important; }
+        .hint-dot { background: var(--accent2); }
         @media (max-width:520px){ :root{--cell:42px;--grid-px:420px} .app-container{padding:6px} .btn-start{font-size:1.1rem;padding:14px 38px} }
         @media (max-width:440px){ :root{--cell:36px;--grid-px:360px} }
     </style>
@@ -194,7 +200,7 @@
 
             let audioCtx = null, musicGainNode = null, sfxGainNode = null;
             let startMusicInterval = null, gameMusicInterval = null;
-            let audioInitialized = false, musicMuted = false; // renamed: hanya untuk musik
+            let audioInitialized = false, musicMuted = false;
 
             function initAudio() {
                 if (audioInitialized && audioCtx) return;
@@ -202,10 +208,10 @@
                     audioCtx = new(window.AudioContext || window.webkitAudioContext)();
                     if (audioCtx.state === 'suspended') audioCtx.resume().catch(() => {});
                     musicGainNode = audioCtx.createGain();
-                    musicGainNode.gain.setValueAtTime(musicMuted ? 0 : 0.18, audioCtx.currentTime); // diperkecil
+                    musicGainNode.gain.setValueAtTime(musicMuted ? 0 : 0.18, audioCtx.currentTime);
                     musicGainNode.connect(audioCtx.destination);
                     sfxGainNode = audioCtx.createGain();
-                    sfxGainNode.gain.setValueAtTime(0.85, audioCtx.currentTime); // SFX tetap keras
+                    sfxGainNode.gain.setValueAtTime(0.85, audioCtx.currentTime);
                     sfxGainNode.connect(audioCtx.destination);
                     audioInitialized = true;
                 } catch (e) { console.warn('Web Audio API tidak tersedia'); }
@@ -215,7 +221,6 @@
                 musicMuted = !musicMuted;
                 const mVol = musicMuted ? 0 : 0.18;
                 if (musicGainNode) musicGainNode.gain.setValueAtTime(mVol, audioCtx.currentTime);
-                // SFX tidak terpengaruh
                 volumeLabel.textContent = musicMuted ? 'OFF' : 'ON';
                 volumeIcon.textContent = musicMuted ? '🔇' : '🎵';
             }
@@ -239,7 +244,7 @@
                 const tm = audioCtx.currentTime + dl;
                 const o = audioCtx.createOscillator(), g = audioCtx.createGain();
                 o.type = t; o.frequency.setValueAtTime(f, tm);
-                g.gain.setValueAtTime(Math.min(v, 0.15), tm); // batasi volume not musik
+                g.gain.setValueAtTime(Math.min(v, 0.15), tm);
                 g.gain.exponentialRampToValueAtTime(0.001, tm + d);
                 o.connect(g); g.connect(musicGainNode); o.start(tm); o.stop(tm + d);
             }
@@ -372,29 +377,92 @@
                 });
             }
 
-            function findClosestShapeCell(shape,cx,cy,sr,sc){ const CS=getCellSize(); let bestDist=Infinity,bestR=0,bestC=0; for(const [r,c] of shape){ const cellCx=(sc+c)*CS+CS/2,cellCy=(sr+r)*CS+CS/2,dist=Math.hypot(cellCx-cx,cellCy-cy); if(dist<bestDist){bestDist=dist;bestR=r;bestC=c;} } return{r:bestR,c:bestC}; }
+            // IMPROVED ACCURACY: snap based on center of closest cell to pointer
+            function findClosestShapeCell(shape,cx,cy,sr,sc){
+                const CS=getCellSize(); let bestDist=Infinity,bestR=0,bestC=0;
+                for(const [r,c] of shape){
+                    const cellCx=(sc+c)*CS+CS/2, cellCy=(sr+r)*CS+CS/2;
+                    const dist=Math.hypot(cellCx-cx, cellCy-cy);
+                    if(dist<bestDist){ bestDist=dist; bestR=r; bestC=c; }
+                }
+                return {r:bestR, c:bestC};
+            }
+
             function startDrag(e,idx){
                 if(!gameActive||gamePaused||idx>=pieces.length)return;
                 initAudio(); ensureAudioRunning(); const piece=pieces[idx], b=getBounds(piece.shape), CS=getCellSize();
                 const rect=boardCanvas.getBoundingClientRect(), sx=boardCanvas.width/rect.width, sy=boardCanvas.height/rect.height;
                 const cx=(e.clientX-rect.left)*sx, cy=(e.clientY-rect.top)*sy;
-                const scInit=Math.round(cx/CS-b.minC-(b.cols-1)/2), srInit=Math.round(cy/CS-b.minR-(b.rows-1)/2);
+                // Calculate initial rough placement
+                const scInit=Math.round(cx/CS - b.minC - (b.cols-1)/2);
+                const srInit=Math.round(cy/CS - b.minR - (b.rows-1)/2);
                 const grab=findClosestShapeCell(piece.shape,cx,cy,srInit,scInit);
+                // Snap grab cell to nearest grid intersection
+                const grabGridCol = Math.round(cx/CS);
+                const grabGridRow = Math.round(cy/CS);
+                const sc = grabGridCol - grab.c;
+                const sr = grabGridRow - grab.r;
+                // Build ghost
                 const ghW=b.cols*CS, ghH=b.rows*CS; ghostCanvas.width=ghW+8; ghostCanvas.height=ghH+8; ghostCtx.clearRect(0,0,ghW+8,ghH+8);
                 ghostCtx.fillStyle='rgba(0,0,0,0.4)'; piece.shape.forEach(([r,c])=>{ const px=(c-b.minC)*CS+5,py=(r-b.minR)*CS+5; ghostCtx.beginPath(); ghostCtx.roundRect(px,py,CS-4,CS-4,9); ghostCtx.fill(); });
                 piece.shape.forEach(([r,c])=>{ draw3DBlock(ghostCtx,(c-b.minC)*CS+2,(r-b.minR)*CS+2,CS,COLORS[piece.colorIdx],0.95); });
                 dragGhost.style.width=(ghW+8)+'px'; dragGhost.style.height=(ghH+8)+'px'; dragGhost.classList.add('active');
-                const grabGridCol=Math.round(cx/CS), grabGridRow=Math.round(cy/CS), sc=grabGridCol-grab.c, sr=grabGridRow-grab.r;
-                dragState={idx,pointerId:e.pointerId,b,grab,sr,sc,valid:canPlace(piece.shape,sr,sc)}; updateGhostScreenPos(sr,sc,b);
+                dragState={idx,pointerId:e.pointerId,b,grab,sr,sc,valid:canPlace(piece.shape,sr,sc)};
+                updateGhostScreenPos(sr,sc,b);
                 document.body.classList.add('dragging'); selectedPieceIndex=-1; renderTray();
                 pieceTray.querySelectorAll('.piece-card').forEach((c,j)=>{if(j===idx)c.classList.add('dragging-source');});
                 document.addEventListener('pointermove',onDragMove,{passive:false}); document.addEventListener('pointerup',onDragEnd); document.addEventListener('pointercancel',onDragEnd);
             }
-            function updateGhostScreenPos(sr,sc,b){ const CS=getCellSize(), rect=boardCanvas.getBoundingClientRect(), sx=boardCanvas.width/rect.width, sy=boardCanvas.height/rect.height, bx=(sc+b.minC)*CS-2, by=(sr+b.minR)*CS-2; dragGhost.style.left=(rect.left+bx/sx)+'px'; dragGhost.style.top=(rect.top+by/sy)+'px'; }
-            function onDragMove(e){ if(!dragState||e.pointerId!==dragState.pointerId)return; if(gamePaused){onDragEnd(e);return;} e.preventDefault(); const CS=getCellSize(), rect=boardCanvas.getBoundingClientRect(), sx=boardCanvas.width/rect.width, sy=boardCanvas.height/rect.height, cx=(e.clientX-rect.left)*sx, cy=(e.clientY-rect.top)*sy; const grabGridCol=Math.round(cx/CS), grabGridRow=Math.round(cy/CS), sc=grabGridCol-dragState.grab.c, sr=grabGridRow-dragState.grab.r; const valid=(sr>=0&&sr<GRID_SIZE&&sc>=0&&sc<GRID_SIZE&&pieces[dragState.idx]&&canPlace(pieces[dragState.idx].shape,sr,sc)); dragState.sr=sr; dragState.sc=sc; dragState.valid=valid; updateGhostScreenPos(sr,sc,dragState.b); canvasWrapper.classList.toggle('drag-hover',valid); drawBoard(); }
-            function onDragEnd(e){ if(!dragState||e.pointerId!==dragState.pointerId)return; document.removeEventListener('pointermove',onDragMove); document.removeEventListener('pointerup',onDragEnd); document.removeEventListener('pointercancel',onDragEnd); const {idx,sr,sc,valid}=dragState; dragState=null; dragGhost.classList.remove('active'); document.body.classList.remove('dragging'); canvasWrapper.classList.remove('drag-hover'); pieceTray.querySelectorAll('.piece-card').forEach(c=>c.classList.remove('dragging-source')); if(valid&&gameActive&&!gamePaused&&idx<pieces.length){ if(!placePiece(idx,sr,sc))sfxInvalid(); } else if(gameActive&&!gamePaused){sfxInvalid();} drawBoard(); renderTray(); }
 
-            boardCanvas.addEventListener('click',e=>{ if(!gameActive||gamePaused||dragState)return; if(selectedPieceIndex<0||selectedPieceIndex>=pieces.length)return; initAudio(); ensureAudioRunning(); const CS=getCellSize(), rect=boardCanvas.getBoundingClientRect(), sx=boardCanvas.width/rect.width, sy=boardCanvas.height/rect.height, cx=(e.clientX-rect.left)*sx, cy=(e.clientY-rect.top)*sy; const piece=pieces[selectedPieceIndex], b=getBounds(piece.shape), scInit=Math.round(cx/CS-b.minC-(b.cols-1)/2), srInit=Math.round(cy/CS-b.minR-(b.rows-1)/2), grab=findClosestShapeCell(piece.shape,cx,cy,srInit,scInit), grabGridCol=Math.round(cx/CS), grabGridRow=Math.round(cy/CS), sc=grabGridCol-grab.c, sr=grabGridRow-grab.r; if(sr>=0&&sr<GRID_SIZE&&sc>=0&&sc<GRID_SIZE){ if(!placePiece(selectedPieceIndex,sr,sc))sfxInvalid(); } else sfxInvalid(); });
+            function updateGhostScreenPos(sr,sc,b){
+                const CS=getCellSize(), rect=boardCanvas.getBoundingClientRect(), sx=boardCanvas.width/rect.width, sy=boardCanvas.height/rect.height;
+                const bx=(sc+b.minC)*CS-2, by=(sr+b.minR)*CS-2;
+                dragGhost.style.left=(rect.left+bx/sx)+'px'; dragGhost.style.top=(rect.top+by/sy)+'px';
+            }
+
+            function onDragMove(e){
+                if(!dragState||e.pointerId!==dragState.pointerId)return;
+                if(gamePaused){onDragEnd(e);return;}
+                e.preventDefault();
+                const CS=getCellSize(), rect=boardCanvas.getBoundingClientRect(), sx=boardCanvas.width/rect.width, sy=boardCanvas.height/rect.height;
+                const cx=(e.clientX-rect.left)*sx, cy=(e.clientY-rect.top)*sy;
+                const grabGridCol=Math.round(cx/CS), grabGridRow=Math.round(cy/CS);
+                const sc=grabGridCol - dragState.grab.c;
+                const sr=grabGridRow - dragState.grab.r;
+                const valid = (sr>=0&&sr<GRID_SIZE&&sc>=0&&sc<GRID_SIZE && pieces[dragState.idx] && canPlace(pieces[dragState.idx].shape,sr,sc));
+                dragState.sr=sr; dragState.sc=sc; dragState.valid=valid;
+                updateGhostScreenPos(sr,sc,dragState.b);
+                canvasWrapper.classList.toggle('drag-hover',valid);
+                drawBoard();
+            }
+
+            function onDragEnd(e){
+                if(!dragState||e.pointerId!==dragState.pointerId)return;
+                document.removeEventListener('pointermove',onDragMove); document.removeEventListener('pointerup',onDragEnd); document.removeEventListener('pointercancel',onDragEnd);
+                const {idx,sr,sc,valid}=dragState;
+                dragState=null; dragGhost.classList.remove('active'); document.body.classList.remove('dragging'); canvasWrapper.classList.remove('drag-hover');
+                pieceTray.querySelectorAll('.piece-card').forEach(c=>c.classList.remove('dragging-source'));
+                if(valid&&gameActive&&!gamePaused&&idx<pieces.length){ if(!placePiece(idx,sr,sc))sfxInvalid(); }
+                else if(gameActive&&!gamePaused){sfxInvalid();}
+                drawBoard(); renderTray();
+            }
+
+            // TAP-TO-PLACE with same improved snapping
+            boardCanvas.addEventListener('click',e=>{
+                if(!gameActive||gamePaused||dragState)return;
+                if(selectedPieceIndex<0||selectedPieceIndex>=pieces.length)return;
+                initAudio(); ensureAudioRunning();
+                const CS=getCellSize(), rect=boardCanvas.getBoundingClientRect(), sx=boardCanvas.width/rect.width, sy=boardCanvas.height/rect.height;
+                const cx=(e.clientX-rect.left)*sx, cy=(e.clientY-rect.top)*sy;
+                const piece=pieces[selectedPieceIndex], b=getBounds(piece.shape);
+                const scInit=Math.round(cx/CS - b.minC - (b.cols-1)/2);
+                const srInit=Math.round(cy/CS - b.minR - (b.rows-1)/2);
+                const grab=findClosestShapeCell(piece.shape,cx,cy,srInit,scInit);
+                const grabGridCol=Math.round(cx/CS), grabGridRow=Math.round(cy/CS);
+                const sc=grabGridCol - grab.c, sr=grabGridRow - grab.r;
+                if(sr>=0&&sr<GRID_SIZE&&sc>=0&&sc<GRID_SIZE){ if(!placePiece(selectedPieceIndex,sr,sc))sfxInvalid(); }
+                else sfxInvalid();
+            });
 
             function showStart(){ gameActive=false; gamePaused=false; pauseOverlay.classList.remove('active'); stopGameplayMusic(); if(timerInterval)clearInterval(timerInterval); gameOverOverlay.classList.remove('active'); startPage.classList.add('active'); gamePage.classList.remove('active'); dragState=null; dragGhost.classList.remove('active'); document.body.classList.remove('dragging'); clearingCells=[]; particles=[]; popAnims=[]; scorePopups=[]; shockwaves=[]; shakeAmount=0; shakeDuration=0; resetGrid(); pieces=[]; selectedPieceIndex=-1; pieceTray.innerHTML=''; updateCanvasSize(); drawBoard(); if(audioInitialized && !musicMuted) startStartPageMusic(); }
             function startGame(){ initAudio(); ensureAudioRunning(); sfxStartButton(); stopStartPageMusic(); loadingOverlay.classList.add('active'); sfxLoading(); setTimeout(()=>{ loadingOverlay.classList.remove('active'); resetGrid(); score=0; totalPausedMs=0; pauseStartTime=0; clearingCells=[]; clearAnimTimer=0; particles=[]; popAnims=[]; scorePopups=[]; shockwaves=[]; shakeAmount=0; shakeDuration=0; dragState=null; gamePaused=false; pauseOverlay.classList.remove('active'); dragGhost.classList.remove('active'); document.body.classList.remove('dragging'); updateScore(); updateTimeDisplay(); gameActive=true; selectedPieceIndex=-1; pieces=[]; updateCanvasSize(); genPieces(3); drawBoard(); renderTray(); startPage.classList.remove('active'); gamePage.classList.add('active'); gameOverOverlay.classList.remove('active'); startTimer(); if(!musicMuted) startGameplayMusic(); },600); }
