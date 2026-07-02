@@ -5,15 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>BLOX RUN</title>
     <meta name="description" content="BLOX RUN - Puzzle blok seret & letakkan. Cocokkan warna, penuhi baris, dan raih skor tertinggi. Dibuat oleh Nnfachy.">
+    <!-- Embed preview tags – replace the image URL with your own screenshot if desired -->
     <meta property="og:title" content="BLOX RUN">
     <meta property="og:description" content="Puzzle blok 10x10 yang seru! Seret blok warna-warni, penuhi baris atau kolom, dan dapatkan efek ledakan menggelegar.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://nnfachy.github.io/blox-run/">
-    <meta property="og:image" content="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1200' height='630'%3E%3Crect width='1200' height='630' fill='%23141c2b'/%3E%3Ctext x='600' y='315' font-family='Arial' font-size='80' font-weight='bold' fill='%23ffe140' text-anchor='middle' dominant-baseline='middle'%3EBLOX RUN%3C/text%3E%3C/svg%3E">
+    <meta property="og:image" content="https://via.placeholder.com/1200x630/141c2b/ffe140?text=BLOX+RUN">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="BLOX RUN">
     <meta name="twitter:description" content="Puzzle blok 10x10 yang seru! Seret blok warna-warni, penuhi baris atau kolom, dan dapatkan efek ledakan menggelegar.">
-    <meta name="twitter:image" content="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1200' height='600'%3E%3Crect width='1200' height='600' fill='%23141c2b'/%3E%3Ctext x='600' y='300' font-family='Arial' font-size='80' font-weight='bold' fill='%23ffe140' text-anchor='middle' dominant-baseline='middle'%3EBLOX RUN%3C/text%3E%3C/svg%3E">
+    <meta name="twitter:image" content="https://via.placeholder.com/1200x630/141c2b/ffe140?text=BLOX+RUN">
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect x='10' y='10' width='80' height='80' rx='20' fill='%23ff3b3b'/%3E%3Crect x='25' y='25' width='20' height='20' rx='5' fill='%23ffe140'/%3E%3Crect x='55' y='55' width='20' height='20' rx='5' fill='%233b7bff'/%3E%3C/svg%3E">
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Caveat:wght@700&family=Quicksand:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
@@ -208,7 +209,8 @@
                     audioCtx = new(window.AudioContext || window.webkitAudioContext)();
                     if (audioCtx.state === 'suspended') audioCtx.resume().catch(() => {});
                     musicGainNode = audioCtx.createGain();
-                    musicGainNode.gain.setValueAtTime(musicMuted ? 0 : 0.18, audioCtx.currentTime);
+                    // slightly louder master gain (0.25 instead of 0.18)
+                    musicGainNode.gain.setValueAtTime(musicMuted ? 0 : 0.25, audioCtx.currentTime);
                     musicGainNode.connect(audioCtx.destination);
                     sfxGainNode = audioCtx.createGain();
                     sfxGainNode.gain.setValueAtTime(0.85, audioCtx.currentTime);
@@ -219,7 +221,7 @@
 
             function toggleMusicMute() {
                 musicMuted = !musicMuted;
-                const mVol = musicMuted ? 0 : 0.18;
+                const mVol = musicMuted ? 0 : 0.25;
                 if (musicGainNode) musicGainNode.gain.setValueAtTime(mVol, audioCtx.currentTime);
                 volumeLabel.textContent = musicMuted ? 'OFF' : 'ON';
                 volumeIcon.textContent = musicMuted ? '🔇' : '🎵';
@@ -244,7 +246,8 @@
                 const tm = audioCtx.currentTime + dl;
                 const o = audioCtx.createOscillator(), g = audioCtx.createGain();
                 o.type = t; o.frequency.setValueAtTime(f, tm);
-                g.gain.setValueAtTime(Math.min(v, 0.15), tm);
+                // slightly higher per-note cap (0.2)
+                g.gain.setValueAtTime(Math.min(v, 0.2), tm);
                 g.gain.exponentialRampToValueAtTime(0.001, tm + d);
                 o.connect(g); g.connect(musicGainNode); o.start(tm); o.stop(tm + d);
             }
@@ -264,7 +267,7 @@
                 ensureAudioRunning();
                 const mel = [{f:262,d:0.5},{f:330,d:0.5},{f:392,d:0.6},{f:330,d:0.4},{f:294,d:0.5},{f:349,d:0.5},{f:440,d:0.7},{f:349,d:0.5},{f:330,d:0.45},{f:294,d:0.45},{f:262,d:0.8},{f:220,d:0.5}];
                 let i = 0;
-                function play() { if(!startMusicInterval)return; const n=mel[i%mel.length]; playMusicNote(n.f,'sine',n.d*0.75,0.12,0); playMusicNote(n.f*1.5,'sine',n.d*0.4,0.05,n.d*0.08); if(i%4===0)playMusicNote(n.f/2,'triangle',n.d*1.1,0.08,0); i++; }
+                function play() { if(!startMusicInterval)return; const n=mel[i%mel.length]; playMusicNote(n.f,'sine',n.d*0.75,0.16,0); playMusicNote(n.f*1.5,'sine',n.d*0.4,0.07,n.d*0.08); if(i%4===0)playMusicNote(n.f/2,'triangle',n.d*1.1,0.1,0); i++; }
                 play(); startMusicInterval = setInterval(play,1950);
             }
             function stopStartPageMusic() { if(startMusicInterval){clearInterval(startMusicInterval);startMusicInterval=null;} }
@@ -275,7 +278,7 @@
                 const bass=[110,110,130,130,146,146,130,110,98,110,130,146];
                 const chords=[[330,392,440],[330,392,440],[349,440,523],[349,440,523],[392,466,587],[392,466,587],[349,440,523],[330,392,440],[294,349,440],[330,392,440],[349,440,523],[392,466,587]];
                 let i=0;
-                function play() { if(!gameMusicInterval)return; const b=bass[i%12],ch=chords[i%12]; playMusicNote(b,'triangle',0.3,0.14,0); playMusicNote(b*2,'sine',0.15,0.06,0.04); ch.forEach((f,j)=>playMusicNote(f,'square',0.16,0.04,0.06+j*0.04)); if(i%4===0)playMusicNote(b/2,'sine',0.5,0.06,0); i++; }
+                function play() { if(!gameMusicInterval)return; const b=bass[i%12],ch=chords[i%12]; playMusicNote(b,'triangle',0.3,0.18,0); playMusicNote(b*2,'sine',0.15,0.08,0.04); ch.forEach((f,j)=>playMusicNote(f,'square',0.16,0.06,0.06+j*0.04)); if(i%4===0)playMusicNote(b/2,'sine',0.5,0.08,0); i++; }
                 play(); gameMusicInterval = setInterval(play,850);
             }
             function stopGameplayMusic() { if(gameMusicInterval){clearInterval(gameMusicInterval);gameMusicInterval=null;} }
@@ -377,7 +380,7 @@
                 });
             }
 
-            // IMPROVED ACCURACY: snap based on center of closest cell to pointer
+            // Improved accuracy: snap based on the center of the cell closest to the pointer
             function findClosestShapeCell(shape,cx,cy,sr,sc){
                 const CS=getCellSize(); let bestDist=Infinity,bestR=0,bestC=0;
                 for(const [r,c] of shape){
@@ -393,16 +396,11 @@
                 initAudio(); ensureAudioRunning(); const piece=pieces[idx], b=getBounds(piece.shape), CS=getCellSize();
                 const rect=boardCanvas.getBoundingClientRect(), sx=boardCanvas.width/rect.width, sy=boardCanvas.height/rect.height;
                 const cx=(e.clientX-rect.left)*sx, cy=(e.clientY-rect.top)*sy;
-                // Calculate initial rough placement
                 const scInit=Math.round(cx/CS - b.minC - (b.cols-1)/2);
                 const srInit=Math.round(cy/CS - b.minR - (b.rows-1)/2);
                 const grab=findClosestShapeCell(piece.shape,cx,cy,srInit,scInit);
-                // Snap grab cell to nearest grid intersection
-                const grabGridCol = Math.round(cx/CS);
-                const grabGridRow = Math.round(cy/CS);
-                const sc = grabGridCol - grab.c;
-                const sr = grabGridRow - grab.r;
-                // Build ghost
+                const grabGridCol = Math.round(cx/CS), grabGridRow = Math.round(cy/CS);
+                const sc = grabGridCol - grab.c, sr = grabGridRow - grab.r;
                 const ghW=b.cols*CS, ghH=b.rows*CS; ghostCanvas.width=ghW+8; ghostCanvas.height=ghH+8; ghostCtx.clearRect(0,0,ghW+8,ghH+8);
                 ghostCtx.fillStyle='rgba(0,0,0,0.4)'; piece.shape.forEach(([r,c])=>{ const px=(c-b.minC)*CS+5,py=(r-b.minR)*CS+5; ghostCtx.beginPath(); ghostCtx.roundRect(px,py,CS-4,CS-4,9); ghostCtx.fill(); });
                 piece.shape.forEach(([r,c])=>{ draw3DBlock(ghostCtx,(c-b.minC)*CS+2,(r-b.minR)*CS+2,CS,COLORS[piece.colorIdx],0.95); });
@@ -427,8 +425,7 @@
                 const CS=getCellSize(), rect=boardCanvas.getBoundingClientRect(), sx=boardCanvas.width/rect.width, sy=boardCanvas.height/rect.height;
                 const cx=(e.clientX-rect.left)*sx, cy=(e.clientY-rect.top)*sy;
                 const grabGridCol=Math.round(cx/CS), grabGridRow=Math.round(cy/CS);
-                const sc=grabGridCol - dragState.grab.c;
-                const sr=grabGridRow - dragState.grab.r;
+                const sc=grabGridCol - dragState.grab.c, sr=grabGridRow - dragState.grab.r;
                 const valid = (sr>=0&&sr<GRID_SIZE&&sc>=0&&sc<GRID_SIZE && pieces[dragState.idx] && canPlace(pieces[dragState.idx].shape,sr,sc));
                 dragState.sr=sr; dragState.sc=sc; dragState.valid=valid;
                 updateGhostScreenPos(sr,sc,dragState.b);
@@ -447,7 +444,6 @@
                 drawBoard(); renderTray();
             }
 
-            // TAP-TO-PLACE with same improved snapping
             boardCanvas.addEventListener('click',e=>{
                 if(!gameActive||gamePaused||dragState)return;
                 if(selectedPieceIndex<0||selectedPieceIndex>=pieces.length)return;
